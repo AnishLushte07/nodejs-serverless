@@ -1,0 +1,30 @@
+service: aws-node-http-api-project
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  environment: ${file(./env.yml):${opt:stage, self:provider.stage}}
+
+functions:
+  test:
+    handler: handler.test
+    events:
+      - httpApi:
+          path: /test
+          method: get
+  inovoke:
+    handler: handler.invokeJob
+    events:
+      - httpApi:
+          path: /v1/Module/{moduleName}/Jobs/{jobName}/Invoke
+          method: post
+  inovokeWithId:
+    handler: handler.invokeJobWithId
+    events:
+      - httpApi:
+          path: /v1/Module/{moduleName}/Jobs/{jobName}/Invoke/{invocationId}
+          method: post
+
+plugins:
+  - serverless-offline

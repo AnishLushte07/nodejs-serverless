@@ -1,0 +1,9 @@
+{
+  "name": "aws-node-http-api-project",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "redis": "^4.0.4",
+    "uuid": "^8.3.2"
+  }
+}

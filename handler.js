@@ -1,18 +1,27 @@
 "use strict";
-const { v4: uuidv4 } = require("uuid");
+const aws = require("aws-sdk");
 
 const redisClient = require("./lib/redis");
+const { generateUuid } = require("./lib/utils");
+const { getLambdaFunctionForJob } = require("./lib/jobs")
 
-function generateUuid() {
-  return uuidv4();
-}
+aws.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_KEY,
+});
 
-module.exports.test = async (event) => {
+const lambda = new aws.Lambda({
+  // region: "us-east-1",
+  apiVersion: '2015-03-31',
+  endpoint: "http://localhost:3006" //`lambda.${process.env.REGION}.amazonaws.com`
+});
+
+module.exports.health = async (event) => {
   return {
     statusCode: 200,
     body: JSON.stringify(
       {
-        message: "Working fine...",
+        message: "Healthy",
         input: event,
       },
       null,
@@ -23,19 +32,45 @@ module.exports.test = async (event) => {
 
 module.exports.invokeJob = async (event) => {
   const { moduleName, jobName } = event.pathParameters;
-  const { payload, timeout } = JSON.parse(event.body);
+  const body = JSON.parse(event.body);
+  const { payload, timeout } = body;
+
+  const lambdaFunctionName = getLambdaFunctionForJob(moduleName, jobName);
   const invocationId = generateUuid();
 
-  // set invocation id in redis
-  await redisClient.set(`JOB_${invocationId}`, 1);
+  const jobKey = `JOB_${invocationId}`;
+  const value = JSON.stringify({
+    status: "PENDING",
+    createdOn: new Date(),
+    attempt: 1,
+    invocationId,
+    payload,
+  });
 
-  // invoke job
+  // invoke job with payload and job key
+  const lambdaPayload = {
+    payload,
+    jobKey,
+    invocationId,
+  };
+
+  const result = await lambda
+    .invoke({
+      FunctionName: lambdaFunctionName,
+      InvocationType: "Event",
+      Payload: JSON.stringify(lambdaPayload)
+    })
+    .promise();
+
+  // set invocation id in redis
+  await redisClient.set(jobKey, value);
 
   return {
     statusCode: 200,
     body: JSON.stringify(
       {
         invocationId: invocationId,
+        lambdaPayload,
         attempt: 1,
       }
     ),
@@ -47,7 +82,8 @@ module.exports.invokeJobWithId = async (event) => {
   const { payload, timeout, forceRun = false } = JSON.parse(event.body);
 
   // check invocation id exists
-  const data = await redisClient.get(`JOB_${invocationId}`);
+  const jobKey = `JOB_${invocationId}`;
+  const data = JSON.parse(await redisClient.get(jobKey));
   let attempt = 1;
 
   if (data) {
@@ -63,11 +99,37 @@ module.exports.invokeJobWithId = async (event) => {
         ),
       };
     } else {
-      attempt = await redisClient.incr(`JOB_${invocationId}`);
+      attempt = data.attempt + 1;
     }
   }
 
-  // invoke job
+  const value = JSON.stringify({
+    status: "PENDING",
+    createdOn: new Date(),
+    attempt,
+    invocationId,
+    payload,
+  });
+  
+  const lambdaPayload = {
+    payload,
+    jobKey,
+    invocationId,
+  };
+
+  const lambdaFunctionName = getLambdaFunctionForJob(moduleName, jobName);
+
+  const result = await lambda
+    .invoke({
+      FunctionName: lambdaFunctionName,
+      InvocationType: "Event",
+      Payload: JSON.stringify(lambdaPayload)
+    })
+    .promise();
+
+  // set invocation id in redis
+  await redisClient.set(jobKey, value);
+
 
   return {
     statusCode: 200,
@@ -75,6 +137,7 @@ module.exports.invokeJobWithId = async (event) => {
       {
         invocationId,
         attempt,
+        jobKey,
       }
     ),
   };

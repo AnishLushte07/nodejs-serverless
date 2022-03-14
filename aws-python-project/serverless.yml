@@ -1,0 +1,14 @@
+service: aws-python-project
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+
+functions:
+  testJobLambda:
+    handler: handler.hello
+
+plugins:
+  - serverless-offline

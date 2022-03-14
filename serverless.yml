@@ -1,17 +1,25 @@
-service: aws-node-http-api-project
+service: job-invoker-lambda
 frameworkVersion: '3'
 
 provider:
   name: aws
   runtime: nodejs14.x
   environment: ${file(./env.yml):${opt:stage, self:provider.stage}}
+  memorySize: 128
+  timeout: 4
+  # iamRoleStatements:
+  #   - Effect: "Allow"
+  #     Action:
+  #       - "lambda:InvokeFunction"
+  #       - "lambda:InvokeAsync"
+  #     Resource: "*"
 
 functions:
-  test:
-    handler: handler.test
+  health:
+    handler: handler.health
     events:
       - httpApi:
-          path: /test
+          path: /health
           method: get
   inovoke:
     handler: handler.invokeJob

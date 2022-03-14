@@ -24,6 +24,7 @@ def hello(event, context):
     parseData = json.loads(data)
     parseData["completedOn"] = datetime.datetime.now().isoformat()
     parseData["response"] = { "success": True }
+    parseData["status"] = "COMPLETED"
 
     redisData = json.dumps(parseData)
 

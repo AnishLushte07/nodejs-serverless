@@ -81,12 +81,26 @@ Alternatively, it is also possible to emulate API Gateway and Lambda locally by 
 serverless plugin install -n serverless-offline
 ```
 
-It will add the `serverless-offline` plugin to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`.
+# Details
 
-After installation, you can start local emulation with:
+### Invoke lambda payload
 
 ```
-serverless offline
+  {
+    payload = object,
+    jobKey = string,      // redis key
+    invocationId = string,
+  }
 ```
 
-To learn more about the capabilities of `serverless-offline`, please refer to its [GitHub repository](https://github.com/dherault/serverless-offline).
+### Redis value
+
+```
+  {
+    status: string,  // PENDING | COMPLETED
+    createdOn: Date,
+    attempt: integer,
+    invocationId: string,
+    payload = {},
+  }
+```

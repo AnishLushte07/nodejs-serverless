@@ -1,7 +1,11 @@
+
+env.yml
+
 # package directories
 node_modules
 jspm_packages
-env.yml
 
 # Serverless directories
 .serverless
+
+env.yml

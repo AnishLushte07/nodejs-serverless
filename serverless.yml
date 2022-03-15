@@ -16,23 +16,33 @@ provider:
 
 functions:
   health:
-    handler: handler.health
+    handler: endpoints/health.index
     events:
       - httpApi:
           path: /health
           method: get
-  inovoke:
-    handler: handler.invokeJob
+  invoke:
+    handler: endpoints/invokeJob.index
     events:
       - httpApi:
-          path: /v1/Module/{moduleName}/Jobs/{jobName}/Invoke
+          path: /v1/module/{moduleName}/job/{jobName}/invoke
           method: post
-  inovokeWithId:
-    handler: handler.invokeJobWithId
+  invokeWithId:
+    handler: endpoints/invokeJobWithId.index
     events:
       - httpApi:
-          path: /v1/Module/{moduleName}/Jobs/{jobName}/Invoke/{invocationId}
+          path: /v1/module/{moduleName}/job/{jobName}/invoke/{invocationId}
           method: post
+  statusById:
+    handler: endpoints/statusByInvocationId.index
+    events:
+      - httpApi:
+          path: /v1/module/{moduleName}/job/{jobName}/invoke/{invocationId}
+          method: get
 
 plugins:
   - serverless-offline
+  - serverless-webpack
+
+package:
+  individually: true

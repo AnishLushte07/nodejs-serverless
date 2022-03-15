@@ -1,13 +1,13 @@
 import json
-import redis
+# import redis
 import json
 import datetime
 
 
-r = redis.Redis(
-    host='127.0.0.1',
-    port=6379, 
-)
+# r = redis.Redis(
+#     host='127.0.0.1',
+#     port=6379, 
+# )
 
 def hello(event, context):
     body = {
@@ -19,15 +19,18 @@ def hello(event, context):
     jobKey = event.get("jobKey")
     invocationId = event.get("invocationId")
 
-    data = r.get(jobKey)
+    print(invocationId)
+    print(jobKey)
 
-    parseData = json.loads(data)
-    parseData["completedOn"] = datetime.datetime.now().isoformat()
-    parseData["response"] = { "success": True }
-    parseData["status"] = "COMPLETED"
+    # data = r.get(jobKey)
 
-    redisData = json.dumps(parseData)
+    # parseData = json.loads(data)
+    # parseData["completedOn"] = datetime.datetime.now().isoformat()
+    # parseData["response"] = { "success": True }
+    # parseData["status"] = "COMPLETED"
 
-    r.set(jobKey, redisData)
+    # redisData = json.dumps(parseData)
+
+    # r.set(jobKey, redisData)
 
     return {"statusCode": 200 }

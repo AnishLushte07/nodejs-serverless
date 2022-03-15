@@ -1,7 +1,7 @@
 "use strict";
 const aws = require("aws-sdk");
 
-const redisClient = require("./lib/redis");
+// const redisClient = require("./lib/redis");
 const { generateUuid } = require("./lib/utils");
 const { getLambdaFunctionForJob } = require("./lib/jobs")
 
@@ -13,7 +13,7 @@ aws.config.update({
 const lambda = new aws.Lambda({
   // region: "us-east-1",
   apiVersion: '2015-03-31',
-  endpoint: "http://localhost:3006" //`lambda.${process.env.REGION}.amazonaws.com`
+  endpoint: process.env.AWS_LAMBDA_ENDPOINT //`lambda.${process.env.REGION}.amazonaws.com`
 });
 
 module.exports.health = async (event) => {
@@ -63,7 +63,7 @@ module.exports.invokeJob = async (event) => {
     .promise();
 
   // set invocation id in redis
-  await redisClient.set(jobKey, value);
+  // await redisClient.set(jobKey, value);
 
   return {
     statusCode: 200,
@@ -83,7 +83,7 @@ module.exports.invokeJobWithId = async (event) => {
 
   // check invocation id exists
   const jobKey = `JOB_${invocationId}`;
-  const data = JSON.parse(await redisClient.get(jobKey));
+  const data = undefined; //JSON.parse(await redisClient.get(jobKey));
   let attempt = 1;
 
   if (data) {
@@ -128,7 +128,7 @@ module.exports.invokeJobWithId = async (event) => {
     .promise();
 
   // set invocation id in redis
-  await redisClient.set(jobKey, value);
+  // await redisClient.set(jobKey, value);
 
 
   return {

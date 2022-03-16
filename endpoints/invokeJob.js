@@ -11,6 +11,14 @@ module.exports.index = async (event) => {
   const { payload, timeout } = body;
 
   const lambdaFunctionName = getLambdaFunctionForJob(moduleName, jobName);
+
+  if (!lambdaFunctionName) {
+    return {
+      statusCode: 400,
+      body: "Lambda fucntion for job does not exists",
+    };
+  }
+
   const invocationId = generateUuid();
 
   const jobKey = `JOB_${invocationId}`;
@@ -29,7 +37,9 @@ module.exports.index = async (event) => {
     invocationId,
   };
 
-  const result = await lambda
+  await redisClient.set(jobKey, value);
+
+  await lambda
     .invoke({
       FunctionName: lambdaFunctionName,
       InvocationType: "Event",
@@ -37,16 +47,12 @@ module.exports.index = async (event) => {
     })
     .promise();
 
-  // set invocation id in redis
-  await redisClient.set(jobKey, value);
-
   return {
     statusCode: 200,
     body: JSON.stringify({
-      invocationId: invocationId,
-      lambdaPayload,
+      invocationId,
+      jobKey,
       attempt: 1,
-      result,
     }),
   };
 };
